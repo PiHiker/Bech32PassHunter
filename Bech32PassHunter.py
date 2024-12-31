@@ -8,7 +8,7 @@ from math import ceil
 # Configurations
 mnemonic_phrase = "leopard damp effort face charge exclude pilot drum vanish case volume rude warfare call sure embrace drive sure update ugly plastic movie resist pill"
 target_address = "bc1q0u2ddk090cyrxf57sfhatw0mdksycmy6l9ruw8"
-wordlist_path = "/usr/share/wordlists/fasttrack.txt"
+wordlist_path = "fasttrack.txt"
 
 # Function to generate Bech32 address using Bip84
 def generate_address(mnemonic, passphrase):
