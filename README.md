@@ -25,9 +25,11 @@ This project was inspired by the [Corey Phillips Bitcoin Puzzle](https://private
 
 ## Installation
 
-1. Clone the repository:
+1. Clone the repository and change to directory:
 
-git clone https://github.com/PiHiker/Bech32PassHunter.git cd Bech32PassHunter
+git clone https://github.com/PiHiker/Bech32PassHunter.git 
+
+cd Bech32PassHunter
 
 2. Install dependencies:
 
