@@ -33,7 +33,25 @@ cd Bech32PassHunter
 
 2. Install dependencies:
 
+Option 1: Use a Virtual Environment (Recommended)
+Create a virtual environment in your project directory:
+
+python3 -m venv venv
+
+Activate the virtual environment:
+
+source venv/bin/activate
+
+You should see (venv) at the beginning of your terminal prompt, indicating the virtual environment is active. 
+Then, install dependencies:
+
 pip install -r requirements.txt
+
+Option 2: Install Directly
+
+If you want to bypass the virtual environment, run:
+
+pip install -r requirements.txt --break-system-packages
 
 ## Usage
 
