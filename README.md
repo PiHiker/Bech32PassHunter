@@ -3,26 +3,28 @@
 [![Python](https://img.shields.io/badge/Python-3.7%2B-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 ![Bruteforce](https://img.shields.io/badge/Focus-Brute%20Force-orange)
-![BIP39](https://img.shields.io/badge/Standard-BIP39-yellow)
+![Bech32](https://img.shields.io/badge/Bitcoin-Bech32-yellow)
 
-Fast, multiprocessing brute-force of BIP39 passphrases for a known mnemonic, producing Bech32 (BIP-84) addresses from a wordlist. Built for focused recovery workflows with clear progress telemetry.
+**Bech32PassHunter** is a high-performance Python tool for brute-forcing passphrases from a wordlist to derive Bech32 Bitcoin addresses using a known mnemonic phrase. With multiprocessing and real-time progress updates, it’s built for fast, repeatable recovery workflows.
 
-> **Responsible use only.** Recover wallets you own or have explicit permission to access.
-
----
-
-## Why BIP39PassHunter
-
-- **Speed-first design**: uses all available CPU cores by default.
-- **Actionable telemetry**: live stats on speed, progress, and ETA.
-- **Simple CLI**: one command to get started, plenty of overrides when needed.
+> **Use responsibly.** This tool is for ethical recovery of wallets you own or have explicit permission to access.
 
 ---
 
-## Quick Start
+## ✨ Highlights
+
+- **Mnemonic-based address derivation** using BIP-84 (Bech32).
+- **Multiprocessing performance** with automatic CPU core usage.
+- **Live progress metrics** (speed, remaining, ETA).
+- **Configurable CLI** for wordlists, workers, and update cadence.
+- **Fail-fast discovery**: stops immediately when a passphrase is found.
+
+---
+
+## 🚀 Quick Start
 
 ```bash
-python3 BIP39PassHunter.py \
+python3 Bech32PassHunter.py \
   --mnemonic "word1 word2 ..." \
   --target-address bc1... \
   --wordlist-path /path/to/wordlist.txt
@@ -30,16 +32,18 @@ python3 BIP39PassHunter.py \
 
 ---
 
-## Installation
+## 📦 Installation
 
-Clone the repo:
+1. **Clone the repo**
 
 ```bash
 git clone https://github.com/PiHiker/Bech32PassHunter.git
 cd Bech32PassHunter
 ```
 
-Install dependencies:
+2. **Install dependencies**
+
+**Option 1 (Recommended): Virtual Environment**
 
 ```bash
 python3 -m venv venv
@@ -47,7 +51,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-If you prefer a direct install:
+**Option 2: Direct Install**
 
 ```bash
 pip install -r requirements.txt --break-system-packages
@@ -55,12 +59,12 @@ pip install -r requirements.txt --break-system-packages
 
 ---
 
-## Usage
+## 🧰 Usage
 
 Run with defaults:
 
 ```bash
-python3 BIP39PassHunter.py
+python3 Bech32PassHunter.py
 ```
 
 Override key parameters:
@@ -74,7 +78,7 @@ python3 BIP39PassHunter.py \
   --update-interval 1.5
 ```
 
-Show all options:
+View all options:
 
 ```bash
 python3 BIP39PassHunter.py -h
@@ -93,7 +97,7 @@ python3 BIP39PassHunter.py -h
 
 ---
 
-## How It Works
+## 🔍 How It Works
 
 1. Loads passphrases from the wordlist.
 2. Derives a Bech32 (BIP-84) address for each passphrase.
@@ -102,7 +106,7 @@ python3 BIP39PassHunter.py -h
 
 ---
 
-## Progress Output Example
+## 📊 Real-Time Progress Example
 
 ```
 Chunks created: 8, Chunk size: 33
@@ -113,7 +117,7 @@ Passphrase found: password
 
 ---
 
-## Project Layout
+## 🗂 Project Layout
 
 ```
 .
@@ -125,7 +129,13 @@ Passphrase found: password
 
 ---
 
-## Limitations
+## ⚠️ Responsible Use
+
+This project is intended for ethical use only. Only attempt to recover wallets you own or have explicit permission to access. Unauthorized access is illegal and unethical.
+
+---
+
+## 🧩 Limitations
 
 - Performance depends on CPU capability and wordlist size.
 - Wordlists must be correctly formatted (one passphrase per line).
@@ -133,6 +143,6 @@ Passphrase found: password
 
 ---
 
-## License
+## 📝 License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
