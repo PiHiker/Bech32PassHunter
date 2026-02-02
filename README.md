@@ -59,14 +59,25 @@ Run the script with:
 
 python3 Bech32PassHunter.py
 
+You can also override defaults via CLI flags:
+
+python3 Bech32PassHunter.py \
+  --mnemonic "word1 word2 ..." \
+  --target-address bc1... \
+  --wordlist-path /path/to/wordlist.txt \
+  --workers 8 \
+  --update-interval 1.5
+
 
 ## Configuration
 
-Before running the script, customize the following variables inside the script:
+Before running the script, you can customize the following variables inside the script or use the CLI options above:
 
 - **`mnemonic_phrase`**: Replace with your known 12, 15, 18, 21, or 24-word mnemonic phrase.
 - **`target_address`**: Replace with the Bech32 Bitcoin address you are attempting to recover.
 - **`wordlist_path`**: Replace with the path to your wordlist file.
+- **`workers`**: Tune how many CPU processes to use.
+- **`update_interval`**: Control how often progress updates are printed.
 
 ## How It Works
 
@@ -100,4 +111,3 @@ This tool is intended solely for ethical purposes, such as recovering access to 
 ## License
 
 This project is licensed under the MIT License. See the LICENSE file for details.
-
