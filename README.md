@@ -1,4 +1,4 @@
-# BIP39PassHunter
+# Bech32PassHunter
 
 [![Python](https://img.shields.io/badge/Python-3.7%2B-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -70,7 +70,7 @@ python3 Bech32PassHunter.py
 Override key parameters:
 
 ```bash
-python3 BIP39PassHunter.py \
+python3 Bech32PassHunter.py \
   --mnemonic "word1 word2 ..." \
   --target-address bc1... \
   --wordlist-path /path/to/wordlist.txt \
@@ -81,7 +81,7 @@ python3 BIP39PassHunter.py \
 View all options:
 
 ```bash
-python3 BIP39PassHunter.py -h
+python3 Bech32PassHunter.py -h
 ```
 
 ### CLI Options
@@ -121,7 +121,7 @@ Passphrase found: password
 
 ```
 .
-├── BIP39PassHunter.py    # Main script
+├── Bech32PassHunter.py   # Main script
 ├── fasttrack.txt         # Example wordlist
 ├── requirements.txt      # Python dependencies
 └── README.md
