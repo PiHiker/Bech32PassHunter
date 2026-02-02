@@ -89,6 +89,7 @@ Use `-h` to see all available options:
 python3 Bech32PassHunter.py -h
 ```
 
+
 ## Configuration
 
 Before running the script, you can customize the following variables inside the script or use the CLI options above:
