@@ -33,7 +33,7 @@ def generate_address(mnemonic, passphrase):
     return address
 
 # Worker function to process passphrase chunks
-def worker(passphrases, shared_data, mnemonic_phrase, target_address):
+def worker(passphrases, shared_data, mnemonic_phrase, target_address, reveal):
     local_processed = 0
     for passphrase in passphrases:
         if shared_data.get("found"):
@@ -41,16 +41,17 @@ def worker(passphrases, shared_data, mnemonic_phrase, target_address):
         passphrase = passphrase.strip()
         try:
             address = generate_address(mnemonic_phrase, passphrase)
-            local_processed += 1
-
-            # Check if the address matches the target
-            if address == target_address:
-                with shared_data["lock"]:
-                    shared_data["found"] = passphrase
-                return
         except Exception:
-            # Optionally log the exception
-            continue
+            # Third-party exceptions may include input. Do not transmit their text.
+            raise RuntimeError("Address derivation failed.") from None
+        local_processed += 1
+        if address == target_address:
+            with shared_data["lock"]:
+                if not shared_data["found"]:
+                    if reveal:
+                        shared_data["match_text"] = passphrase
+                    shared_data["found"] = True
+            return
 
         # Update processed count in shared data
         if local_processed % PROGRESS_BATCH_SIZE == 0:
@@ -85,9 +86,10 @@ def read_mnemonic():
     return phrase
 
 
-def report_match(found, reveal):
-    if reveal and sys.stdout.isatty():
-        print(f"\n\nPassphrase found: {found}")
+def report_match(shared_data):
+    if sys.stdout.isatty() and "match_text" in shared_data:
+        # A wordlist entry can contain terminal control sequences.
+        print(f"\n\nPassphrase found (quoted): {shared_data.pop('match_text')!r}")
     else:
         print("\n\nPassphrase found (hidden).")
 
@@ -176,6 +178,12 @@ def main():
         print("No mnemonic read. Use a terminal with hidden input, or use --demo.", file=sys.stderr)
         return 2
 
+    with Manager() as manager:
+        return run_checks(args, words, mnemonic, manager)
+
+
+def run_checks(args, words, mnemonic, manager):
+    total_words = len(words)
     num_workers = max(1, min(args.workers, total_words))
     chunk_size = args.chunk_size or ceil(total_words / num_workers)
     chunk_size = max(1, chunk_size)
@@ -183,20 +191,20 @@ def main():
 
     print(f"Chunks created: {len(chunks)}, Chunk size: {chunk_size}")
 
-    manager = Manager()
     shared_data = manager.dict()
-    shared_data["found"] = None
+    shared_data["found"] = False
     shared_data["processed"] = 0
     shared_data["lock"] = manager.Lock()
 
-    start_time = time.time()
+    start_time = time.monotonic()
+    reveal = args.show_passphrase and sys.stdout.isatty()
 
     # Start multiprocessing pool
     with Pool(num_workers) as pool:
         result = pool.starmap_async(
             worker,
             [
-                (chunk, shared_data, mnemonic, args.target_address or DEFAULT_TARGET_ADDRESS)
+                (chunk, shared_data, mnemonic, args.target_address or DEFAULT_TARGET_ADDRESS, reveal)
                 for chunk in chunks
             ],
         )
@@ -209,7 +217,7 @@ def main():
                     processed = shared_data["processed"]
                     found = shared_data["found"]
 
-                elapsed_time = time.time() - start_time
+                elapsed_time = time.monotonic() - start_time
                 words_per_sec = processed / elapsed_time if elapsed_time > 0 else 0
                 remaining = total_words - processed
                 time_remaining_sec = remaining / words_per_sec if words_per_sec > 0 else -1
@@ -224,7 +232,7 @@ def main():
                 sys.stdout.flush()
 
                 if found:
-                    report_match(found, args.show_passphrase)
+                    report_match(shared_data)
                     pool.terminate()
                     pool.join()
                     return 0
@@ -235,17 +243,24 @@ def main():
             pool.join()
             return 130
 
+        try:
+            result.get()
+        except Exception:
+            print("\nRun incomplete: a worker failed. No negative result is available.",
+                  file=sys.stderr)
+            return 2
+
         # Ensure all processes are cleaned up
         pool.close()
         pool.join()
 
     # Final output
     with shared_data["lock"]:
-        if shared_data["found"] is None:
+        if not shared_data["found"]:
             print("\n\nPassphrase not found in the given wordlist.")
             return 1
         else:
-            report_match(shared_data["found"], args.show_passphrase)
+            report_match(shared_data)
             return 0
 
 if __name__ == "__main__":

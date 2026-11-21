@@ -76,7 +76,7 @@ Workers report progress in batches, so the counter can pause or jump. A match ca
 | --- | --- |
 | `0` | Match found (or help displayed). |
 | `1` | Run completed without a match for the supplied inputs. |
-| `2` | Input or setup problem. Read the message on standard error. |
+| `2` | Input, setup, or worker error. An incomplete check is not a negative result. See standard error. |
 | `130` | Interrupted with Ctrl+C. |
 
 If a run finishes without a match, first confirm the known address’s account, receiving index, and network in the original wallet. A negative result does not establish that the mnemonic is wrong.
