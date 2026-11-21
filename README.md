@@ -7,7 +7,7 @@
 
 **Have your Bitcoin recovery words but forgot the optional passphrase?** Bech32PassHunter checks a local list of passphrases you remember against your wallet’s first BIP84 receiving address. A match confirms that your words and that passphrase reproduce the address. No balance lookup is needed.
 
-**Works offline.** Download and install the tool first. Then disconnect before entering wallet information. Neither address verification nor passphrase checking needs a Bitcoin node, block explorer, or internet connection.
+**Works offline.** Download and install the tool first. On Linux, use `./offline.sh` to run it without an internet connection even if the computer stays online. On other systems, disconnect before entering wallet information. Neither address verification nor passphrase checking needs a Bitcoin node or block explorer.
 
 [Wallet compatibility](#is-this-the-right-tool-for-my-wallet) · [Public demo](#install-and-try-the-public-demo) · [Offline setup](#offline-setup) · [CLI options](#cli-options) · [Reading the output](#reading-the-output)
 
@@ -56,6 +56,18 @@ The demo uses public example data and the included `fasttrack.txt`. Run it from 
 A successful demo ends with `Passphrase found (hidden).` This checks that the installation works with the bundled example. It does not test your wallet.
 
 ### Offline setup
+
+**To block the tool’s network access on Linux:** activate the project virtual environment, then use `./offline.sh` instead of `python Bech32PassHunter.py`. Try it with public data first:
+
+```sh
+./offline.sh --demo
+```
+
+The launcher uses Linux network namespaces. The script and its worker processes see only an isolated loopback interface, with no route to the internet or LAN. If `unshare` is missing or the kernel disallows unprivileged namespaces, the launcher stops; it never retries without isolation. Running Python directly does **not** enable this protection. This isolates networking, not the filesystem or other software on the computer.
+
+**For a home wallet:** run the demo first. If you have an account public export, start with `./offline.sh verify-address`; you may be able to answer your question without touching the recovery words. Use a trusted local terminal rather than a shared or recorded session. A file containing remembered passphrases is sensitive too: keep it out of cloud-synced folders.
+
+**For a research lab:** use the public demo or synthetic wallet data. The launcher disables ordinary core dumps, sets owner-only default permissions for new files, and starts Python in isolated mode without writing bytecode. It doesn’t change permissions on existing files, remove secrets from memory, or protect a compromised host.
 
 If the wallet computer must **never** go online, prepare the files on a connected computer with the same operating system, processor architecture, and Python version. From the project directory, build a local folder of installable packages:
 
