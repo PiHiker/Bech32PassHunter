@@ -166,16 +166,32 @@ def main():
         return 2
 
     try:
-        from bip_utils import Bip39SeedGenerator, Bip44Changes, Bip84, Bip84Coins
+        from bip_utils import Bip39MnemonicValidator, P2WPKHAddrDecoder
     except ImportError:
         print("Cannot load bip_utils. In the project virtual environment, run: "
               "python -m pip install -r requirements.txt", file=sys.stderr)
         return 2
 
+    address = args.target_address or DEFAULT_TARGET_ADDRESS
+    try:
+        program = P2WPKHAddrDecoder.DecodeAddr(address, hrp="bc")
+        if len(program) != 20:
+            raise ValueError()
+    except ValueError:
+        print("Invalid target address. Expected a mainnet Bech32 receiving address "
+              "with a 20-byte witness program and a valid checksum.", file=sys.stderr)
+        return 2
+    args.target_address = address.lower()
+
     try:
         mnemonic = DEFAULT_MNEMONIC_PHRASE if args.demo else read_mnemonic()
     except (EOFError, getpass.GetPassWarning, OSError, ValueError):
         print("No mnemonic read. Use a terminal with hidden input, or use --demo.", file=sys.stderr)
+        return 2
+
+    if not Bip39MnemonicValidator().IsValid(mnemonic):
+        print("Invalid BIP39 mnemonic. Check the words, their order, and the checksum.",
+              file=sys.stderr)
         return 2
 
     with Manager() as manager:

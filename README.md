@@ -36,6 +36,8 @@ A successful demo ends with `Passphrase found (hidden).` This checks that the in
 
 Supply the known receiving address with `--target-address` and a local UTF-8 file with `--wordlist-path`, one candidate per line. Enter the mnemonic at the hidden terminal prompt. It is not accepted as a command-line argument.
 
+The tool checks the address format and checksum before prompting for the mnemonic. It then validates the BIP39 words and checksum locally before starting workers. These checks catch input mistakes; they cannot confirm that an address belongs to a particular wallet.
+
 A match prints `Passphrase found (hidden).` If you need to see the value, choose `--show-passphrase` before starting. It only reveals the result when output goes to a terminal. A terminal recorder can still capture visible text.
 
 ## How it works
