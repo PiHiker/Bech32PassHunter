@@ -7,7 +7,13 @@
 
 **Have your Bitcoin recovery words but forgot the optional passphrase?** Bech32PassHunter checks a local list of passphrases you remember against your wallet’s first BIP84 receiving address. A match confirms that your words and that passphrase reproduce the address. No balance lookup is needed.
 
-**Works offline.** Download and install the tool first. On Linux, use `./offline.sh` to run it without an internet connection even if the computer stays online. On other systems, disconnect before entering wallet information. Neither address verification nor passphrase checking needs a Bitcoin node or block explorer.
+**Works offline.** After setup, neither address verification nor passphrase checking needs a Bitcoin node, a block explorer, or an internet connection. Choose how you want to run the public demo:
+
+| If you have… | Start here |
+| --- | --- |
+| Docker Compose | [Build once, then run with networking disabled](#docker-linux-containers). |
+| Linux and Python | [Use the network-isolated launcher](#native-linux-launcher). |
+| A computer that must stay disconnected | [Prepare the installer on another computer](#installing-on-a-disconnected-computer). |
 
 [Wallet compatibility](#is-this-the-right-tool-for-my-wallet) · [Public demo](#install-and-try-the-public-demo) · [Offline setup](#offline-setup) · [CLI options](#cli-options) · [Reading the output](#reading-the-output)
 
@@ -57,6 +63,29 @@ A successful demo ends with `Passphrase found (hidden).` This checks that the in
 
 ### Offline setup
 
+#### Docker (Linux containers)
+
+With Docker Compose installed, run these commands in the project directory:
+
+```sh
+docker compose build
+docker compose run --rm wallet --demo --workers 1
+```
+
+The **build** needs internet access for Python and its dependencies. The **run**
+uses `network_mode: none`. It runs as a non-root user with a read-only root
+filesystem and a temporary directory for worker sockets. No host folders are
+mounted. The build context is allowlisted, so a private file you add beside the
+script does not get sent to the builder.
+
+For a local address check, run `docker compose run --rm wallet verify-address`
+in an interactive terminal. Enter the address and public export only at the
+prompts. Running the image with plain `docker run` does **not** inherit the
+Compose network settings. Use a local Docker engine you trust: a remote
+Docker context runs the process on another machine.
+
+#### Native Linux launcher
+
 **To block the tool’s network access on Linux:** activate the project virtual environment, then use `./offline.sh` instead of `python Bech32PassHunter.py`. Try it with public data first:
 
 ```sh
@@ -68,6 +97,8 @@ The launcher uses Linux network namespaces. The script and its worker processes 
 **For a home wallet:** run the demo first. If you have an account public export, start with `./offline.sh verify-address`; you may be able to answer your question without touching the recovery words. Use a trusted local terminal rather than a shared or recorded session. A file containing remembered passphrases is sensitive too: keep it out of cloud-synced folders.
 
 **For a research lab:** use the public demo or synthetic wallet data. The launcher disables ordinary core dumps, sets owner-only default permissions for new files, and starts Python in isolated mode without writing bytecode. It doesn’t change permissions on existing files, remove secrets from memory, or protect a compromised host.
+
+#### Installing on a disconnected computer
 
 If the wallet computer must **never** go online, prepare the files on a connected computer with the same operating system, processor architecture, and Python version. From the project directory, build a local folder of installable packages:
 

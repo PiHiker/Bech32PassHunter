@@ -1,0 +1,15 @@
+services:
+  wallet:
+    build: .
+    network_mode: none
+    read_only: true
+    user: "65532:65532"
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,noexec,mode=1777,size=16m
+    ulimits:
+      core: 0
+    logging:
+      driver: none
