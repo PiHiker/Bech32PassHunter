@@ -39,7 +39,7 @@ class ResultPrivacyTests(unittest.TestCase):
     def test_checksum_typo_rejected_before_secret_prompt(self):
         bad = app.DEFAULT_TARGET_ADDRESS[:-1] + "q"
         err = io.StringIO()
-        with patch.object(sys, "argv", ["tool", "--target-address", bad]), \
+        with patch.object(sys, "argv", ["tool", "--target-address", bad, "--wordlist-path", app.DEFAULT_WORDLIST_PATH]), \
                 patch.object(app, "read_mnemonic") as prompt, contextlib.redirect_stderr(err):
             self.assertEqual(app.main(), 2)
             prompt.assert_not_called()
@@ -48,13 +48,22 @@ class ResultPrivacyTests(unittest.TestCase):
 
     def test_invalid_mnemonic_not_echoed_or_sent_to_workers(self):
         err = io.StringIO()
-        with patch.object(sys, "argv", ["tool", "--target-address", app.DEFAULT_TARGET_ADDRESS]), \
+        with patch.object(sys, "argv", ["tool", "--target-address", app.DEFAULT_TARGET_ADDRESS,
+                                       "--wordlist-path", app.DEFAULT_WORDLIST_PATH]), \
                 patch.object(app, "read_mnemonic", return_value="synthetic invalid input"), \
                 patch.object(app, "Manager") as manager, contextlib.redirect_stderr(err):
             self.assertEqual(app.main(), 2)
             manager.assert_not_called()
         self.assertIn("Invalid BIP39 mnemonic", err.getvalue())
         self.assertNotIn("synthetic invalid input", err.getvalue())
+
+    def test_personal_run_requires_explicit_list_before_prompt(self):
+        err = io.StringIO()
+        with patch.object(sys, "argv", ["tool", "--target-address", app.DEFAULT_TARGET_ADDRESS]), \
+                patch.object(app, "read_mnemonic") as prompt, contextlib.redirect_stderr(err):
+            self.assertEqual(app.main(), 2)
+            prompt.assert_not_called()
+        self.assertIn("Choose your own list", err.getvalue())
 
 
 if __name__ == "__main__":

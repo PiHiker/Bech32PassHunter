@@ -65,7 +65,7 @@ You can now turn off Wi-Fi and unplug Ethernet. Try the public demo while discon
 python Bech32PassHunter.py --demo
 ```
 
-The demo uses public example data and the included `fasttrack.txt`. Run it from the repository directory. To inspect the available options without installing dependencies, run `python3 Bech32PassHunter.py --help`.
+The demo finds its example list beside the script, even if you launch it from another directory. To inspect the available options without installing dependencies, run `python3 Bech32PassHunter.py --help`.
 
 A successful demo ends with `Passphrase found (hidden).` This checks that the installation works with the bundled example. It does not test your wallet.
 
@@ -160,9 +160,9 @@ A match prints `Passphrase found (hidden).` If you need to see the value, choose
 | --- | --- | --- |
 | `--demo` | Off | Uses the public example mnemonic instead of the hidden prompt. |
 | `--target-address` | Required outside demo mode | Known first receiving address. The demo supplies its own if omitted. |
-| `--wordlist-path` | `fasttrack.txt` | UTF-8 text file, one candidate per line. Relative paths start in the current directory. |
+| `--wordlist-path` | Required outside demo mode | Your UTF-8 list, one entry per line. Relative paths start in the current directory. The demo includes its own list. |
 | `--show-passphrase` | Off | Displays a match only if standard output is a terminal. |
-| `--workers` | CPU count | Number of worker processes, capped at the number of input lines. |
+| `--workers` | CPU count (at most 2 by default in demo mode) | Number of worker processes, capped at the number of input lines. |
 | `--chunk-size` | `0` (automatic) | Number of lines in each work chunk. |
 | `--update-interval` | `2.0` seconds | Time between progress updates. |
 | `-h`, `--help` | | Prints usage and exits without prompting for a mnemonic. |
@@ -172,10 +172,12 @@ A match prints `Passphrase found (hidden).` If you need to see the value, choose
 A public demo run can look like this. Counts and timing vary:
 
 ```text
-Chunks created: 8, Chunk size: 33
+Demo mode: using public recovery words, not your wallet.
+Checking a list of 262 entries against the first receiving address in account 0.
 Processed: 100/262 | Remaining: 162 | Words/sec: 50.00 | Time Elapsed: 0h:00m:02s | Estimated Time Remaining: 0h:00m:03s
 
 Passphrase found (hidden).
+Demo complete. The match was for the example wallet only.
 ```
 
 Workers report progress in batches, so the counter can pause or jump. A match can end the run before the counter reaches the total. Use the final message and exit code to interpret the result.

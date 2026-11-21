@@ -5,6 +5,7 @@ import sys
 import time
 import warnings
 from math import ceil, isfinite
+from pathlib import Path
 from multiprocessing import Manager, Pool
 
 DEFAULT_MNEMONIC_PHRASE = (
@@ -174,14 +175,12 @@ def parse_args():
     )
     parser.add_argument(
         "--wordlist-path",
-        default=DEFAULT_WORDLIST_PATH,
-        help="Path to the wordlist file (one passphrase per line).",
+        help="Your local list (one remembered passphrase per line). The demo includes its own.",
     )
     parser.add_argument(
         "--workers",
         type=int,
-        default=multiprocessing.cpu_count(),
-        help="Number of worker processes to use (default: CPU count).",
+        help="Number of worker processes (default: CPU count, at most two in the demo).",
     )
     parser.add_argument(
         "--chunk-size",
@@ -195,11 +194,18 @@ def parse_args():
         default=2.0,
         help="Seconds between progress updates.",
     )
-    return parser.parse_args()
+    args = parser.parse_args()
+    if args.workers is None:
+        cpus = multiprocessing.cpu_count()
+        args.workers = min(2, cpus) if args.demo else cpus
+    return args
 
 def validate_args(args):
     if not args.target_address and not args.demo:
         raise ValueError("Supply --target-address for a personal run, or use --demo.")
+    if args.wordlist_path is None and not args.demo:
+        raise ValueError("Choose your own list with --wordlist-path. "
+                         "The bundled list is for the demo. No wallet words were requested.")
     if args.workers < 1:
         raise ValueError("Workers must be at least 1.")
     if args.chunk_size < 0:
@@ -240,8 +246,12 @@ No wallet data has been requested or checked.""")
     except ValueError as exc:
         print(f"Invalid arguments: {exc}", file=sys.stderr)
         return 2
+    if args.demo:
+        print("Demo mode: using public recovery words, not your wallet.")
+    wordlist = (Path(__file__).resolve().with_name(DEFAULT_WORDLIST_PATH)
+                if args.wordlist_path is None else Path(args.wordlist_path))
     try:
-        with open(args.wordlist_path, "r", encoding="utf-8") as file:
+        with wordlist.open("r", encoding="utf-8") as file:
             words = []
             for line_number, line in enumerate(file, start=1):
                 # Text mode normalizes CRLF/CR to LF. Remove only the line ending.
@@ -292,7 +302,10 @@ No wallet data has been requested or checked.""")
         return 2
 
     with Manager() as manager:
-        return run_checks(args, words, mnemonic, manager)
+        status = run_checks(args, words, mnemonic, manager)
+    if args.demo and status == 0:
+        print("Demo complete. The match was for the example wallet only.")
+    return status
 
 
 def run_checks(args, words, mnemonic, manager):
@@ -302,7 +315,7 @@ def run_checks(args, words, mnemonic, manager):
     chunk_size = max(1, chunk_size)
     chunks = [words[i:i + chunk_size] for i in range(0, total_words, chunk_size)]
 
-    print(f"Chunks created: {len(chunks)}, Chunk size: {chunk_size}")
+    print(f"Checking a list of {total_words} entries against the first receiving address in account 0.")
 
     shared_data = manager.dict()
     shared_data["found"] = False
