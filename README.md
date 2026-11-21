@@ -25,7 +25,6 @@
 
 ```bash
 python3 Bech32PassHunter.py \
-  --mnemonic "word1 word2 ..." \
   --target-address bc1... \
   --wordlist-path /path/to/wordlist.txt
 ```
@@ -61,17 +60,16 @@ pip install -r requirements.txt --break-system-packages
 
 ## 🧰 Usage
 
-Run with defaults:
+Try the included public demo:
 
 ```bash
-python3 Bech32PassHunter.py
+python3 Bech32PassHunter.py --demo
 ```
 
-Override key parameters:
+For your own wallet, omit `--demo`. Enter the mnemonic at the hidden terminal prompt. The old `--mnemonic` option is no longer accepted because shell history and process listings can expose its value.
 
 ```bash
 python3 Bech32PassHunter.py \
-  --mnemonic "word1 word2 ..." \
   --target-address bc1... \
   --wordlist-path /path/to/wordlist.txt \
   --workers 8 \
@@ -88,7 +86,8 @@ python3 Bech32PassHunter.py -h
 
 | Flag | Default | Description |
 | --- | --- | --- |
-| `--mnemonic` | Built-in demo mnemonic | Known mnemonic phrase used to derive addresses. |
+| `--demo` | Off | Use the public demo mnemonic instead of prompting for hidden input. |
+| `--show-passphrase` | Off | Display the recovered passphrase on a terminal. Redirected output still hides it. |
 | `--target-address` | Demo Bech32 address | Target Bech32 Bitcoin address to match. |
 | `--wordlist-path` | `fasttrack.txt` | Path to a wordlist (one passphrase per line). |
 | `--workers` | CPU count | Number of worker processes to use. |
@@ -112,7 +111,7 @@ python3 Bech32PassHunter.py -h
 Chunks created: 8, Chunk size: 33
 Processed: 229/262 | Remaining: 33 | Words/sec: 113.48 | Time Elapsed: 0h:00m:02s | Estimated Time Remaining: 0h:00m:00s
 
-Passphrase found: password
+Passphrase found (hidden).
 ```
 
 ---

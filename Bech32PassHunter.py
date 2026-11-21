@@ -1,7 +1,9 @@
 import argparse
+import getpass
 import multiprocessing
 import sys
 import time
+import warnings
 from math import ceil
 from multiprocessing import Manager, Pool
 
@@ -68,14 +70,39 @@ def format_time(seconds):
     h, m = divmod(m, 60)
     return f"{h:d}h:{m:02d}m:{s:02d}s"
 
+class PrivateArgumentParser(argparse.ArgumentParser):
+    def error(self, message):
+        # Argument errors can contain a mnemonic pasted on the command line.
+        self.exit(2, "Invalid arguments. Use --help for options.\n")
+
+
+def read_mnemonic():
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", getpass.GetPassWarning)
+        phrase = getpass.getpass("Wallet mnemonic (input hidden): ").strip()
+    if not phrase:
+        raise ValueError("No mnemonic entered.")
+    return phrase
+
+
+def report_match(found, reveal):
+    if reveal and sys.stdout.isatty():
+        print(f"\n\nPassphrase found: {found}")
+    else:
+        print("\n\nPassphrase found (hidden).")
+
+
 def parse_args():
-    parser = argparse.ArgumentParser(
+    parser = PrivateArgumentParser(
         description="Brute-force Bech32 Bitcoin passphrases from a wordlist."
     )
     parser.add_argument(
-        "--mnemonic",
-        default=DEFAULT_MNEMONIC_PHRASE,
-        help="Known mnemonic phrase used to derive addresses.",
+        "--demo", action="store_true",
+        help="Use the public demo mnemonic instead of prompting.",
+    )
+    parser.add_argument(
+        "--show-passphrase", action="store_true",
+        help="Display a match only when output goes to a terminal.",
     )
     parser.add_argument(
         "--target-address",
@@ -135,6 +162,11 @@ def main():
         print("Wordlist is empty. Please provide a wordlist with at least one entry.")
         return
 
+    try:
+        mnemonic = DEFAULT_MNEMONIC_PHRASE if args.demo else read_mnemonic()
+    except (EOFError, KeyboardInterrupt, getpass.GetPassWarning, OSError, ValueError):
+        sys.exit("No mnemonic read. Use a terminal with hidden input, or use --demo.")
+
     num_workers = max(1, min(args.workers, total_words))
     chunk_size = args.chunk_size or ceil(total_words / num_workers)
     chunk_size = max(1, chunk_size)
@@ -155,7 +187,7 @@ def main():
         result = pool.starmap_async(
             worker,
             [
-                (chunk, shared_data, args.mnemonic, args.target_address)
+                (chunk, shared_data, mnemonic, args.target_address)
                 for chunk in chunks
             ],
         )
@@ -183,7 +215,7 @@ def main():
                 sys.stdout.flush()
 
                 if found:
-                    print(f"\n\nPassphrase found: {found}")
+                    report_match(found, args.show_passphrase)
                     pool.terminate()
                     pool.join()
                     return
@@ -202,6 +234,8 @@ def main():
     with shared_data["lock"]:
         if shared_data["found"] is None:
             print("\n\nPassphrase not found in the given wordlist.")
+        else:
+            report_match(shared_data["found"], args.show_passphrase)
 
 if __name__ == "__main__":
     main()
