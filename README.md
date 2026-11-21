@@ -7,7 +7,9 @@
 
 **Have your Bitcoin recovery words but forgot the optional passphrase?** Bech32PassHunter checks a local list of passphrases you remember against your wallet’s first BIP84 receiving address. A match confirms that your words and that passphrase reproduce the address. No balance lookup is needed.
 
-[Wallet compatibility](#is-this-the-right-tool-for-my-wallet) · [Public demo](#install-and-try-the-public-demo) · [CLI options](#cli-options) · [Reading the output](#reading-the-output)
+**Works offline.** Download and install the tool first. Then disconnect before entering wallet information. Neither address verification nor passphrase checking needs a Bitcoin node, block explorer, or internet connection.
+
+[Wallet compatibility](#is-this-the-right-tool-for-my-wallet) · [Public demo](#install-and-try-the-public-demo) · [Offline setup](#offline-setup) · [CLI options](#cli-options) · [Reading the output](#reading-the-output)
 
 **Why “Bech32”?** Bech32 is the encoding of the address used for comparison. The passphrase belongs to BIP39, not Bech32. It is separate from the mnemonic words and from a wallet app’s PIN or file password.
 
@@ -41,12 +43,36 @@ cd Bech32PassHunter
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
+```
+
+You can now turn off Wi-Fi and unplug Ethernet. Try the public demo while disconnected:
+
+```sh
 python Bech32PassHunter.py --demo
 ```
 
 The demo uses public example data and the included `fasttrack.txt`. Run it from the repository directory. To inspect the available options without installing dependencies, run `python3 Bech32PassHunter.py --help`.
 
 A successful demo ends with `Passphrase found (hidden).` This checks that the installation works with the bundled example. It does not test your wallet.
+
+### Offline setup
+
+If the wallet computer must **never** go online, prepare the files on a connected computer with the same operating system, processor architecture, and Python version. From the project directory, build a local folder of installable packages:
+
+```sh
+python3 -m pip wheel --wheel-dir wheels -r requirements.txt
+```
+
+Once that finishes successfully, copy the project files and the `wheels` folder to the offline computer. With Python 3 already installed there, run these commands from the copied project directory:
+
+```sh
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --no-index --find-links=./wheels -r requirements.txt
+python Bech32PassHunter.py --demo
+```
+
+`--no-index` tells pip to install from the local package folder. Keep real recovery words and passphrases off the connected preparation computer. A match checks an address locally; it says nothing about the wallet’s current balance.
 
 ## Use your own inputs
 

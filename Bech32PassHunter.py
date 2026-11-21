@@ -103,7 +103,7 @@ def receiving_index(account, target, count):
 def verify_address(argv):
     parser = PrivateArgumentParser(
         prog="Bech32PassHunter.py verify-address",
-        description="Check receiving addresses from one mainnet BIP84 account zpub.",
+        description="Check receiving addresses offline from one mainnet BIP84 account zpub.",
     )
     parser.add_argument("--count", type=int, default=20,
                         help="Number of receiving addresses, starting at zero (1 to 20).")
@@ -158,7 +158,7 @@ def report_match(shared_data):
 
 def parse_args():
     parser = PrivateArgumentParser(
-        description="Check BIP39 passphrases against a known BIP84 receiving address.",
+        description="Check BIP39 passphrases offline against a known BIP84 receiving address.",
         epilog="Run without arguments for a starting guide. For public account export verification, use: verify-address --help",
     )
     parser.add_argument(
@@ -215,6 +215,7 @@ def main():
 
 Have all your recovery words but forgot the optional BIP39 passphrase?
 First, identify which receiving address you can trust as a reference.
+Once installed, the tool works offline. Disconnect before entering wallet data.
 
   I want to try the software without wallet data.
     python3 Bech32PassHunter.py --demo
