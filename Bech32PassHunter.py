@@ -116,24 +116,35 @@ def verify_address(argv):
     except ImportError:
         print("Install dependencies with python -m pip install -r requirements.txt.", file=sys.stderr)
         return 2
+    issue = "Check the receiving address."
     try:
         target = read_hidden("Known receiving address (input hidden): ")
-        if len(P2WPKHAddrDecoder.DecodeAddr(target, hrp="bc")) != 20:
+        issue = "Expected a mainnet BIP84 receiving address beginning with bc1q."
+        if not target.lower().startswith("bc1q"):
             raise ValueError()
+        issue = "The receiving address failed its encoding or checksum check. Copy it again from your wallet."
+        program = P2WPKHAddrDecoder.DecodeAddr(target, hrp="bc")
+        issue = "This receiving address is not the single-key BIP84 address type this tool checks."
+        if len(program) != 20:
+            raise ValueError()
+        issue = "Choose an account public export beginning with zpub, not a private key."
         export = read_hidden("Mainnet BIP84 account public export (zpub, input hidden): ")
         if not export.startswith("zpub"):
             raise ValueError()
+        issue = "Could not read the zpub. Copy the complete account public export again."
         account = Bip84.FromExtendedKey(export, Bip84Coins.BITCOIN)
+        issue = "Export the account-level zpub, not a receiving branch or individual key."
         if not (account.IsPublicOnly() and account.IsLevel(Bip44Levels.ACCOUNT)
                 and account.Bip32Object().Index().IsHardened()):
             raise ValueError()
+        issue = "The address check did not finish. No match result is available."
         index = receiving_index(account, target.lower(), args.count)
     except (EOFError, OSError, getpass.GetPassWarning):
         print("Use a terminal with hidden input.", file=sys.stderr)
         return 2
     except Exception:
         # Parsing exceptions from wallet libraries can include the input itself.
-        print("Could not verify. Check the receiving address and account-level zpub.", file=sys.stderr)
+        print(issue, file=sys.stderr)
         return 2
     if index is None:
         print(f"No match at receiving indexes 0 through {args.count - 1} in this account.")
@@ -156,7 +167,7 @@ def report_match(shared_data):
         print("\n\nPassphrase found (hidden).")
 
 
-def parse_args():
+def parse_args(argv=None):
     parser = PrivateArgumentParser(
         description="Check BIP39 passphrases offline against a known BIP84 receiving address.",
         epilog="Run without arguments for a starting guide. For public account export verification, use: verify-address --help",
@@ -194,7 +205,7 @@ def parse_args():
         default=2.0,
         help="Seconds between progress updates.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     if args.workers is None:
         cpus = multiprocessing.cpu_count()
         args.workers = min(2, cpus) if args.demo else cpus
@@ -215,7 +226,22 @@ def validate_args(args):
 
 # Main function
 def main():
-    if not sys.argv[1:]:
+    argv = sys.argv[1:]
+    if not argv and sys.stdin.isatty() and sys.stdout.isatty():
+        print("Bech32PassHunter\n1. Try the public demo (no wallet data)"
+              "\n2. Check a saved address (no seed words)\n3. Exit")
+        while True:
+            try:
+                choice = input("Choose 1, 2, or 3: ").strip()
+            except EOFError:
+                return 0
+            if choice == "3":
+                return 0
+            if choice in ("1", "2"):
+                argv = ["--demo"] if choice == "1" else ["verify-address"]
+                break
+            print("Enter the number of an option.")
+    if not argv:
         print("""Bech32PassHunter | Where should I start?
 
 Have all your recovery words but forgot the optional BIP39 passphrase?
@@ -238,9 +264,9 @@ Once installed, the tool works offline. Disconnect before entering wallet data.
 
 No wallet data has been requested or checked.""")
         return 0
-    if sys.argv[1:2] == ["verify-address"]:
-        return verify_address(sys.argv[2:])
-    args = parse_args()
+    if argv[:1] == ["verify-address"]:
+        return verify_address(argv[1:])
+    args = parse_args(argv)
     try:
         validate_args(args)
     except ValueError as exc:
@@ -305,6 +331,9 @@ No wallet data has been requested or checked.""")
         status = run_checks(args, words, mnemonic, manager)
     if args.demo and status == 0:
         print("Demo complete. The match was for the example wallet only.")
+    elif status == 0:
+        print("One entry in your list reproduced the address you supplied. "
+              "This confirms the address match; no balance was checked.")
     return status
 
 

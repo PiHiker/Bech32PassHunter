@@ -32,7 +32,9 @@
 ## Is this the right tool for my wallet?
 
 **Not sure where to start?** Run `python3 Bech32PassHunter.py` with no arguments.
-It shows the available paths without asking for wallet data or installing dependencies.
+In a terminal, choose **1** to try the public demo, **2** to check a saved address,
+or **3** to exit. Opening the menu needs no dependencies or wallet data. With
+redirected input or output, it prints a guide and exits without prompting.
 
 A BIP39 wallet can accept your recovery words and still open a different wallet from the one you expected. A different passphrase produces a different seed, not a “wrong password” message. An address you saved from the original wallet gives you something to compare.
 
@@ -146,7 +148,7 @@ Supply the known receiving address with `--target-address` and a local UTF-8 fil
 
 The tool checks the address format and checksum before prompting for the mnemonic. It then validates the BIP39 words and checksum locally before starting workers. These checks catch input mistakes; they cannot confirm that an address belongs to a particular wallet.
 
-A match prints `Passphrase found (hidden).` If you need to see the value, choose `--show-passphrase` before starting. It only reveals the result when output goes to a terminal. A terminal recorder can still capture visible text.
+A personal match means one entry reproduced the address you supplied. No balance was checked. The passphrase stays hidden by default. If you need to see the value, choose `--show-passphrase` before starting. It only reveals the result when output goes to a terminal. A terminal recorder can still capture visible text.
 
 ## How it works
 
