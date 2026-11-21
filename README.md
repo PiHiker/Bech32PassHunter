@@ -5,15 +5,28 @@
 ![Bruteforce](https://img.shields.io/badge/Focus-Brute%20Force-orange)
 ![Bech32](https://img.shields.io/badge/Bitcoin-Bech32-yellow)
 
-[Wallet compatibility](#check-whether-your-wallet-fits) · [Public demo](#install-and-try-the-public-demo) · [CLI options](#cli-options) · [Reading the output](#reading-the-output)
+**Have your Bitcoin recovery words but forgot the optional passphrase?** Bech32PassHunter checks a local list of passphrases you remember against your wallet’s first BIP84 receiving address. A match confirms that your words and that passphrase reproduce the address. No balance lookup is needed.
 
-Check a list of possible **BIP39 passphrases** against your wallet’s first **BIP84 receiving address**. You need the complete mnemonic and a known address from a Bitcoin mainnet wallet you own or are authorized to recover.
+[Wallet compatibility](#is-this-the-right-tool-for-my-wallet) · [Public demo](#install-and-try-the-public-demo) · [CLI options](#cli-options) · [Reading the output](#reading-the-output)
 
 **Why “Bech32”?** Bech32 is the encoding of the address used for comparison. The passphrase belongs to BIP39, not Bech32. It is separate from the mnemonic words and from a wallet app’s PIN or file password.
 
-## Check whether your wallet fits
+<a id="check-whether-your-wallet-fits"></a>
+
+## Is this the right tool for my wallet?
+
+A BIP39 wallet can accept your recovery words and still open a different wallet from the one you expected. A different passphrase produces a different seed, not a “wrong password” message. An address you saved from the original wallet gives you something to compare.
+
+| Your situation | What to do |
+| --- | --- |
+| You have all your recovery words, a few possible passphrases, and the first receiving address from your original wallet. | Check the address requirements below. If they fit, use [passphrase recovery](#passphrase-recovery). |
+| You have an address from an old invoice and an account public export (zpub), but don’t know the receiving index. | Use [`verify-address`](#have-the-account-public-export-check-that-first) without entering recovery words. If it matches at index 7, for example, the address belongs to that account but is not its first receiving address. |
+| Your hardware wallet still works and you want to verify a backup before replacing it. | Start with the device’s own backup check if it supports what you need to verify. Typing recovery words into a computer exposes them outside the hardware wallet. |
+| You’re missing recovery words or forgot the wallet app’s PIN or file password. | This tool does not recover those. It checks the separate BIP39 passphrase. |
 
 Passphrase recovery compares one address per entry: `m/84'/0'/0'/0/0`, the first external receiving address in account zero. That address starts with `bc1q`, but the prefix alone does not establish the derivation path. A later receiving address, a change address, or a different account can give a negative result even with the correct passphrase. Taproot (`bc1p`, **Bech32m**) is outside this tool’s scope.
+
+**Before trusting “not found”:** confirm the address came from that exact path. Also, this version trims leading and trailing whitespace from each entry, so it cannot check a passphrase that intentionally starts or ends with a space.
 
 ## Install and try the public demo
 
@@ -60,8 +73,6 @@ A match prints `Passphrase found (hidden).` If you need to see the value, choose
 1. The tool reads the candidate file and divides its lines among local worker processes.
 2. For each line, it combines the passphrase with the mnemonic to derive a seed. It then derives the first BIP84 receiving address from that seed.
 3. It compares the derived address with the address you supplied. The address is the check: a different passphrase can produce a valid wallet, just not the one you expected. No balance lookup is involved.
-
-**Whitespace matters:** the current reader strips spaces and other whitespace from the beginning and end of each line. A passphrase that intentionally begins or ends with a space cannot be checked exactly by this version.
 
 ## CLI options
 
