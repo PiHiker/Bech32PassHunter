@@ -77,13 +77,69 @@ class PrivateArgumentParser(argparse.ArgumentParser):
         self.exit(2, "Invalid arguments. Use --help for options.\n")
 
 
-def read_mnemonic():
+def read_hidden(prompt):
     with warnings.catch_warnings():
         warnings.simplefilter("error", getpass.GetPassWarning)
-        phrase = getpass.getpass("Wallet mnemonic (input hidden): ").strip()
-    if not phrase:
-        raise ValueError("No mnemonic entered.")
-    return phrase
+        value = getpass.getpass(prompt).strip()
+    if not value:
+        raise ValueError("Empty input.")
+    return value
+
+
+def read_mnemonic():
+    return read_hidden("Wallet mnemonic (input hidden): ")
+
+
+def receiving_index(account, target, count):
+    from bip_utils import Bip44Changes
+
+    receiving = account.Change(Bip44Changes.CHAIN_EXT)
+    for index in range(count):
+        if receiving.AddressIndex(index).PublicKey().ToAddress() == target:
+            return index
+    return None
+
+
+def verify_address(argv):
+    parser = PrivateArgumentParser(
+        prog="Bech32PassHunter.py verify-address",
+        description="Check receiving addresses from one mainnet BIP84 account zpub.",
+    )
+    parser.add_argument("--count", type=int, default=20,
+                        help="Number of receiving addresses, starting at zero (1 to 20).")
+    args = parser.parse_args(argv)
+    if not 1 <= args.count <= 20:
+        print("Choose a count from 1 to 20.", file=sys.stderr)
+        return 2
+    try:
+        from bip_utils import Bip44Levels, Bip84, Bip84Coins, P2WPKHAddrDecoder
+    except ImportError:
+        print("Install dependencies with python -m pip install -r requirements.txt.", file=sys.stderr)
+        return 2
+    try:
+        target = read_hidden("Known receiving address (input hidden): ")
+        if len(P2WPKHAddrDecoder.DecodeAddr(target, hrp="bc")) != 20:
+            raise ValueError()
+        export = read_hidden("Mainnet BIP84 account public export (zpub, input hidden): ")
+        if not export.startswith("zpub"):
+            raise ValueError()
+        account = Bip84.FromExtendedKey(export, Bip84Coins.BITCOIN)
+        if not (account.IsPublicOnly() and account.IsLevel(Bip44Levels.ACCOUNT)
+                and account.Bip32Object().Index().IsHardened()):
+            raise ValueError()
+        index = receiving_index(account, target.lower(), args.count)
+    except (EOFError, OSError, getpass.GetPassWarning):
+        print("Use a terminal with hidden input.", file=sys.stderr)
+        return 2
+    except Exception:
+        # Parsing exceptions from wallet libraries can include the input itself.
+        print("Could not verify. Check the receiving address and account-level zpub.", file=sys.stderr)
+        return 2
+    if index is None:
+        print(f"No match at receiving indexes 0 through {args.count - 1} in this account.")
+        return 1
+    print(f"Match at receiving index {index}.")
+    return 0
 
 
 def report_match(shared_data):
@@ -96,7 +152,8 @@ def report_match(shared_data):
 
 def parse_args():
     parser = PrivateArgumentParser(
-        description="Check BIP39 passphrases against a known BIP84 receiving address."
+        description="Check BIP39 passphrases against a known BIP84 receiving address.",
+        epilog="For public account export verification, use: verify-address --help",
     )
     parser.add_argument(
         "--demo", action="store_true",
@@ -147,6 +204,8 @@ def validate_args(args):
 
 # Main function
 def main():
+    if sys.argv[1:2] == ["verify-address"]:
+        return verify_address(sys.argv[2:])
     args = parse_args()
     try:
         validate_args(args)

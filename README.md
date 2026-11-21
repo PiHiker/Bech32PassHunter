@@ -13,7 +13,7 @@ Check a list of possible **BIP39 passphrases** against your wallet’s first **B
 
 ## Check whether your wallet fits
 
-This tool compares one address per entry: `m/84'/0'/0'/0/0`, the first external receiving address in account zero. That address starts with `bc1q`, but the prefix alone does not establish the derivation path. A later receiving address, a change address, or a different account can give a negative result even with the correct passphrase. Taproot (`bc1p`, **Bech32m**) is outside this tool’s scope.
+Passphrase recovery compares one address per entry: `m/84'/0'/0'/0/0`, the first external receiving address in account zero. That address starts with `bc1q`, but the prefix alone does not establish the derivation path. A later receiving address, a change address, or a different account can give a negative result even with the correct passphrase. Taproot (`bc1p`, **Bech32m**) is outside this tool’s scope.
 
 ## Install and try the public demo
 
@@ -33,6 +33,21 @@ The demo uses public example data and the included `fasttrack.txt`. Run it from 
 A successful demo ends with `Passphrase found (hidden).` This checks that the installation works with the bundled example. It does not test your wallet.
 
 ## Use your own inputs
+
+### Have the account public export? Check that first
+
+If the wallet gave you a new address each time you clicked **Receive**, use
+`python Bech32PassHunter.py verify-address`. Enter the known address and the
+account’s mainnet BIP84 **zpub** at the hidden prompts. This local check needs
+neither a mnemonic nor a wordlist. A zpub reveals the account’s addresses,
+so treat it as private even though it cannot authorize spending.
+
+The command checks receiving indexes 0 through 19 in that account and reports
+the matching index. Use `--count N` to check just the first N (1 to 20).
+A miss says nothing about change addresses, other accounts, or later indexes.
+This mode accepts account-level zpubs, not descriptors, xpubs, or private keys.
+
+### Passphrase recovery
 
 Supply the known receiving address with `--target-address` and a local UTF-8 file with `--wordlist-path`, one candidate per line. Enter the mnemonic at the hidden terminal prompt. It is not accepted as a command-line argument.
 
