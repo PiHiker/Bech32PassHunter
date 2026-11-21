@@ -38,7 +38,6 @@ def worker(passphrases, shared_data, mnemonic_phrase, target_address, reveal):
     for passphrase in passphrases:
         if shared_data.get("found"):
             return
-        passphrase = passphrase.strip()
         try:
             address = generate_address(mnemonic_phrase, passphrase)
         except Exception:
@@ -243,7 +242,17 @@ No wallet data has been requested or checked.""")
         return 2
     try:
         with open(args.wordlist_path, "r", encoding="utf-8") as file:
-            words = file.readlines()
+            words = []
+            for line_number, line in enumerate(file, start=1):
+                # Text mode normalizes CRLF/CR to LF. Remove only the line ending.
+                entry = line.rstrip("\n")
+                if entry != entry.strip():
+                    print(f"Line {line_number} has leading or trailing whitespace. "
+                          "No entries were checked. Remove it only if it was accidental; "
+                          "this version does not check entries with intentional edge whitespace.",
+                          file=sys.stderr)
+                    return 2
+                words.append(entry)
     except (OSError, UnicodeError):
         print("Cannot read wordlist. Check the path, permissions, and UTF-8 encoding.", file=sys.stderr)
         return 2
@@ -361,7 +370,9 @@ def run_checks(args, words, mnemonic, manager):
     # Final output
     with shared_data["lock"]:
         if not shared_data["found"]:
-            print("\n\nPassphrase not found in the given wordlist.")
+            print("\n\nNone of the supplied entries reproduced the target address as "
+                  "the first BIP84 receiving address in account 0. "
+                  "Other accounts and later receiving addresses were not checked.")
             return 1
         else:
             report_match(shared_data)

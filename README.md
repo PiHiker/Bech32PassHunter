@@ -7,6 +7,14 @@
 
 **Have your Bitcoin recovery words but forgot the optional passphrase?** Bech32PassHunter checks a local list of passphrases you remember against your wallet’s first BIP84 receiving address. A match confirms that your words and that passphrase reproduce the address. No balance lookup is needed.
 
+> **Recovery compatibility at a glance**
+>
+> **Verified recovery words:** 12-word and 24-word BIP39 phrases. You need all the words in order.
+>
+> **Address:** Bitcoin mainnet, first BIP84 receiving address in account 0 (`m/84'/0'/0'/0/0`).
+>
+> **Not covered:** missing words, a wallet app PIN, or a wallet-file password.
+
 **Works offline.** After setup, neither address verification nor passphrase checking needs a Bitcoin node, a block explorer, or an internet connection. Choose how you want to run the public demo:
 
 | If you have… | Start here |
@@ -37,7 +45,7 @@ A BIP39 wallet can accept your recovery words and still open a different wallet 
 
 Passphrase recovery compares one address per entry: `m/84'/0'/0'/0/0`, the first external receiving address in account zero. That address starts with `bc1q`, but the prefix alone does not establish the derivation path. A later receiving address, a change address, or a different account can give a negative result even with the correct passphrase. Taproot (`bc1p`, **Bech32m**) is outside this tool’s scope.
 
-**Before trusting “not found”:** confirm the address came from that exact path. Also, this version trims leading and trailing whitespace from each entry, so it cannot check a passphrase that intentionally starts or ends with a space.
+**Before trusting a negative result:** confirm the address came from that exact path. If an entry starts or ends with whitespace, the tool stops before checking anything and reports only the line number. Remove whitespace only if it was accidental. Intentional spaces at either end are unsupported; spaces between words are preserved.
 
 ## Install and try the public demo
 
