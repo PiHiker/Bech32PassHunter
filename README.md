@@ -1,147 +1,41 @@
 # Bech32PassHunter
 
-[![Python](https://img.shields.io/badge/Python-3.7%2B-blue.svg)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-![Bruteforce](https://img.shields.io/badge/Focus-Brute%20Force-orange)
-![Bech32](https://img.shields.io/badge/Bitcoin-Bech32-yellow)
+Check a list of possible **BIP39 passphrases** against your wallet’s first **BIP84 receiving address**. You need the complete mnemonic and a known address from a Bitcoin mainnet wallet you own or are authorized to recover.
 
-**Bech32PassHunter** is a high-performance Python tool for brute-forcing passphrases from a wordlist to derive Bech32 Bitcoin addresses using a known mnemonic phrase. With multiprocessing and real-time progress updates, it’s built for fast, repeatable recovery workflows.
+**Why “Bech32”?** Bech32 is the encoding of the address used for comparison. The passphrase belongs to BIP39, not Bech32. It is separate from the mnemonic words and from a wallet app’s PIN or file password.
 
-> **Use responsibly.** This tool is for ethical recovery of wallets you own or have explicit permission to access.
+## Check whether your wallet fits
 
----
+This tool compares one address per entry: `m/84'/0'/0'/0/0`, the first external receiving address in account zero. That address starts with `bc1q`, but the prefix alone does not establish the derivation path. A later receiving address, a change address, or a different account can give a negative result even with the correct passphrase. Taproot (`bc1p`, **Bech32m**) is outside this tool’s scope.
 
-## ✨ Highlights
+## Install and try the public demo
 
-- **Mnemonic-based address derivation** using BIP-84 (Bech32).
-- **Multiprocessing performance** with automatic CPU core usage.
-- **Live progress metrics** (speed, remaining, ETA).
-- **Configurable CLI** for wordlists, workers, and update cadence.
-- **Fail-fast discovery**: stops immediately when a passphrase is found.
+From a terminal with Python 3:
 
----
-
-## 🚀 Quick Start
-
-```bash
-python3 Bech32PassHunter.py \
-  --target-address bc1... \
-  --wordlist-path /path/to/wordlist.txt
-```
-
----
-
-## 📦 Installation
-
-1. **Clone the repo**
-
-```bash
+```sh
 git clone https://github.com/PiHiker/Bech32PassHunter.git
 cd Bech32PassHunter
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python Bech32PassHunter.py --demo
 ```
 
-2. **Install dependencies**
+The demo uses public example data and the included `fasttrack.txt`. Run it from the repository directory. To inspect the available options without installing dependencies, run `python3 Bech32PassHunter.py --help`.
 
-**Option 1 (Recommended): Virtual Environment**
+## Use your own inputs
 
-```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
+Supply the known receiving address with `--target-address` and a local UTF-8 file with `--wordlist-path`, one candidate per line. Enter the mnemonic at the hidden terminal prompt. It is not accepted as a command-line argument.
 
-**Option 2: Direct Install**
+A match prints `Passphrase found (hidden).` If you need to see the value, choose `--show-passphrase` before starting. It only reveals the result when output goes to a terminal. A terminal recorder can still capture visible text.
 
-```bash
-pip install -r requirements.txt --break-system-packages
-```
+| Exit code | Meaning |
+| --- | --- |
+| `0` | Match found (or help displayed). |
+| `1` | Run completed without a match for the supplied inputs. |
+| `2` | Input or setup problem. Read the message on standard error. |
+| `130` | Interrupted with Ctrl+C. |
 
----
+If a run finishes without a match, first confirm the known address’s account, receiving index, and network in the original wallet. A negative result does not establish that the mnemonic is wrong.
 
-## 🧰 Usage
-
-Try the included public demo:
-
-```bash
-python3 Bech32PassHunter.py --demo
-```
-
-For your own wallet, omit `--demo`. Enter the mnemonic at the hidden terminal prompt. The old `--mnemonic` option is no longer accepted because shell history and process listings can expose its value.
-
-```bash
-python3 Bech32PassHunter.py \
-  --target-address bc1... \
-  --wordlist-path /path/to/wordlist.txt \
-  --workers 8 \
-  --update-interval 1.5
-```
-
-View all options:
-
-```bash
-python3 Bech32PassHunter.py -h
-```
-
-### CLI Options
-
-| Flag | Default | Description |
-| --- | --- | --- |
-| `--demo` | Off | Use the public demo mnemonic instead of prompting for hidden input. |
-| `--show-passphrase` | Off | Display the recovered passphrase on a terminal. Redirected output still hides it. |
-| `--target-address` | Demo Bech32 address | Target Bech32 Bitcoin address to match. |
-| `--wordlist-path` | `fasttrack.txt` | Path to a wordlist (one passphrase per line). |
-| `--workers` | CPU count | Number of worker processes to use. |
-| `--chunk-size` | Auto-calculated | Override chunk size per worker (0 = auto). |
-| `--update-interval` | `2.0` | Seconds between progress updates. |
-
----
-
-## 🔍 How It Works
-
-1. Loads passphrases from the wordlist.
-2. Derives a Bech32 (BIP-84) address for each passphrase.
-3. Compares each derived address to the target.
-4. Stops immediately if a match is found.
-
----
-
-## 📊 Real-Time Progress Example
-
-```
-Chunks created: 8, Chunk size: 33
-Processed: 229/262 | Remaining: 33 | Words/sec: 113.48 | Time Elapsed: 0h:00m:02s | Estimated Time Remaining: 0h:00m:00s
-
-Passphrase found (hidden).
-```
-
----
-
-## 🗂 Project Layout
-
-```
-.
-├── Bech32PassHunter.py   # Main script
-├── fasttrack.txt         # Example wordlist
-├── requirements.txt      # Python dependencies
-└── README.md
-```
-
----
-
-## ⚠️ Responsible Use
-
-This project is intended for ethical use only. Only attempt to recover wallets you own or have explicit permission to access. Unauthorized access is illegal and unethical.
-
----
-
-## 🧩 Limitations
-
-- Performance depends on CPU capability and wordlist size.
-- Wordlists must be correctly formatted (one passphrase per line).
-- Target mnemonics must match the derivation scheme (BIP-84).
-
----
-
-## 📝 License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+[MIT license](LICENSE)

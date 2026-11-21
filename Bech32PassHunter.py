@@ -4,10 +4,8 @@ import multiprocessing
 import sys
 import time
 import warnings
-from math import ceil
+from math import ceil, isfinite
 from multiprocessing import Manager, Pool
-
-from bip_utils import Bip39SeedGenerator, Bip44Changes, Bip84, Bip84Coins
 
 DEFAULT_MNEMONIC_PHRASE = (
     "leopard damp effort face charge exclude pilot drum vanish case volume rude "
@@ -19,6 +17,8 @@ PROGRESS_BATCH_SIZE = 100
 
 # Function to generate Bech32 address using Bip84
 def generate_address(mnemonic, passphrase):
+    from bip_utils import Bip39SeedGenerator, Bip44Changes, Bip84, Bip84Coins
+
     seed = Bip39SeedGenerator(mnemonic).Generate(passphrase)
     bip84_ctx = Bip84.FromSeed(seed, Bip84Coins.BITCOIN)
     address = (
@@ -94,7 +94,7 @@ def report_match(found, reveal):
 
 def parse_args():
     parser = PrivateArgumentParser(
-        description="Brute-force Bech32 Bitcoin passphrases from a wordlist."
+        description="Check BIP39 passphrases against a known BIP84 receiving address."
     )
     parser.add_argument(
         "--demo", action="store_true",
@@ -106,8 +106,7 @@ def parse_args():
     )
     parser.add_argument(
         "--target-address",
-        default=DEFAULT_TARGET_ADDRESS,
-        help="Target Bech32 Bitcoin address to match.",
+        help="Known receiving address (required unless using --demo).",
     )
     parser.add_argument(
         "--wordlist-path",
@@ -135,12 +134,14 @@ def parse_args():
     return parser.parse_args()
 
 def validate_args(args):
+    if not args.target_address and not args.demo:
+        raise ValueError("Supply --target-address for a personal run, or use --demo.")
     if args.workers < 1:
         raise ValueError("Workers must be at least 1.")
     if args.chunk_size < 0:
         raise ValueError("Chunk size must be 0 or greater.")
-    if args.update_interval <= 0:
-        raise ValueError("Update interval must be greater than 0 seconds.")
+    if not isfinite(args.update_interval) or args.update_interval <= 0:
+        raise ValueError("Update interval must be a finite number greater than 0.")
 
 # Main function
 def main():
@@ -148,24 +149,32 @@ def main():
     try:
         validate_args(args)
     except ValueError as exc:
-        print(f"Invalid arguments: {exc}")
-        return
+        print(f"Invalid arguments: {exc}", file=sys.stderr)
+        return 2
     try:
-        with open(args.wordlist_path, "r", encoding="utf-8", errors="ignore") as file:
+        with open(args.wordlist_path, "r", encoding="utf-8") as file:
             words = file.readlines()
-    except FileNotFoundError:
-        print("Wordlist file not found. Please check the path.")
-        return
+    except (OSError, UnicodeError):
+        print("Cannot read wordlist. Check the path, permissions, and UTF-8 encoding.", file=sys.stderr)
+        return 2
 
     total_words = len(words)
     if total_words == 0:
-        print("Wordlist is empty. Please provide a wordlist with at least one entry.")
-        return
+        print("Wordlist is empty. Provide a file with at least one entry.", file=sys.stderr)
+        return 2
+
+    try:
+        from bip_utils import Bip39SeedGenerator, Bip44Changes, Bip84, Bip84Coins
+    except ImportError:
+        print("Cannot load bip_utils. In the project virtual environment, run: "
+              "python -m pip install -r requirements.txt", file=sys.stderr)
+        return 2
 
     try:
         mnemonic = DEFAULT_MNEMONIC_PHRASE if args.demo else read_mnemonic()
-    except (EOFError, KeyboardInterrupt, getpass.GetPassWarning, OSError, ValueError):
-        sys.exit("No mnemonic read. Use a terminal with hidden input, or use --demo.")
+    except (EOFError, getpass.GetPassWarning, OSError, ValueError):
+        print("No mnemonic read. Use a terminal with hidden input, or use --demo.", file=sys.stderr)
+        return 2
 
     num_workers = max(1, min(args.workers, total_words))
     chunk_size = args.chunk_size or ceil(total_words / num_workers)
@@ -187,7 +196,7 @@ def main():
         result = pool.starmap_async(
             worker,
             [
-                (chunk, shared_data, mnemonic, args.target_address)
+                (chunk, shared_data, mnemonic, args.target_address or DEFAULT_TARGET_ADDRESS)
                 for chunk in chunks
             ],
         )
@@ -218,13 +227,13 @@ def main():
                     report_match(found, args.show_passphrase)
                     pool.terminate()
                     pool.join()
-                    return
+                    return 0
 
         except KeyboardInterrupt:
-            print("\nProcess interrupted by user. Terminating...")
+            print("\nProcess interrupted.", file=sys.stderr)
             pool.terminate()
             pool.join()
-            return
+            return 130
 
         # Ensure all processes are cleaned up
         pool.close()
@@ -234,8 +243,13 @@ def main():
     with shared_data["lock"]:
         if shared_data["found"] is None:
             print("\n\nPassphrase not found in the given wordlist.")
+            return 1
         else:
             report_match(shared_data["found"], args.show_passphrase)
+            return 0
 
 if __name__ == "__main__":
-    main()
+    try:
+        sys.exit(main())
+    except KeyboardInterrupt:
+        sys.exit(130)
