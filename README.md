@@ -15,6 +15,9 @@
 
 ## Is this the right tool for my wallet?
 
+**Not sure where to start?** Run `python3 Bech32PassHunter.py` with no arguments.
+It shows the available paths without asking for wallet data or installing dependencies.
+
 A BIP39 wallet can accept your recovery words and still open a different wallet from the one you expected. A different passphrase produces a different seed, not a “wrong password” message. An address you saved from the original wallet gives you something to compare.
 
 | Your situation | What to do |
@@ -102,7 +105,7 @@ Workers report progress in batches, so the counter can pause or jump. A match ca
 
 | Exit code | Meaning |
 | --- | --- |
-| `0` | Match found (or help displayed). |
+| `0` | Match found, or the guide or help was displayed. |
 | `1` | Run completed without a match for the supplied inputs. |
 | `2` | Input, setup, or worker error. An incomplete check is not a negative result. See standard error. |
 | `130` | Interrupted with Ctrl+C. |

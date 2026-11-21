@@ -137,8 +137,14 @@ def verify_address(argv):
         return 2
     if index is None:
         print(f"No match at receiving indexes 0 through {args.count - 1} in this account.")
+        print("No passphrase was tested. Change addresses and later receiving indexes were not checked.")
         return 1
     print(f"Match at receiving index {index}.")
+    if index != 0 or account.Bip32Object().Index().ToInt() != 0x80000000:
+        print("This address is outside the passphrase checker's account-zero, index-zero scope.")
+    else:
+        print("This is the first receiving address of the supplied account-zero export. "
+              "No passphrase was tested.")
     return 0
 
 
@@ -153,7 +159,7 @@ def report_match(shared_data):
 def parse_args():
     parser = PrivateArgumentParser(
         description="Check BIP39 passphrases against a known BIP84 receiving address.",
-        epilog="For public account export verification, use: verify-address --help",
+        epilog="Run without arguments for a starting guide. For public account export verification, use: verify-address --help",
     )
     parser.add_argument(
         "--demo", action="store_true",
@@ -204,6 +210,28 @@ def validate_args(args):
 
 # Main function
 def main():
+    if not sys.argv[1:]:
+        print("""Bech32PassHunter | Where should I start?
+
+Have all your recovery words but forgot the optional BIP39 passphrase?
+First, identify which receiving address you can trust as a reference.
+
+  I want to try the software without wallet data.
+    python3 Bech32PassHunter.py --demo
+
+  I have a saved address and an account public export (zpub).
+    python3 Bech32PassHunter.py verify-address
+    This checks the first 20 receiving addresses without asking for seed words.
+
+  I know the first receiving address in account zero of my mainnet BIP84 wallet.
+    python3 Bech32PassHunter.py --help
+    See the recovery options. A later invoice address cannot serve as that reference.
+
+  I am missing seed words or forgot the wallet app PIN.
+    This tool does not check either of those.
+
+No wallet data has been requested or checked.""")
+        return 0
     if sys.argv[1:2] == ["verify-address"]:
         return verify_address(sys.argv[2:])
     args = parse_args()
