@@ -1,6 +1,9 @@
 # Bech32PassHunter
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![Python 3](https://img.shields.io/badge/Python-3-blue.svg)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+![Bruteforce](https://img.shields.io/badge/Focus-Brute%20Force-orange)
+![Bech32](https://img.shields.io/badge/Bitcoin-Bech32-yellow)
 
 [Wallet compatibility](#check-whether-your-wallet-fits) · [Public demo](#install-and-try-the-public-demo) · [CLI options](#cli-options) · [Reading the output](#reading-the-output)
 
