@@ -139,6 +139,10 @@ so treat it as private even though it cannot authorize spending.
 
 The command checks receiving indexes 0 through 19 in that account and reports
 the matching index. Use `--count N` to check just the first N (1 to 20).
+If your saved address matches a later index in account 0, the terminal asks
+whether to show that account’s first receiving address. Press Enter to keep it
+hidden. Use an export saved from the original wallet; one created after entering
+a guessed passphrase is not independent evidence. No passphrase is tested here.
 A miss says nothing about change addresses, other accounts, or later indexes.
 This mode accepts account-level zpubs, not descriptors, xpubs, or private keys.
 

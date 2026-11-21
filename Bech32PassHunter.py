@@ -112,7 +112,7 @@ def verify_address(argv):
         print("Choose a count from 1 to 20.", file=sys.stderr)
         return 2
     try:
-        from bip_utils import Bip44Levels, Bip84, Bip84Coins, P2WPKHAddrDecoder
+        from bip_utils import Bip44Changes, Bip44Levels, Bip84, Bip84Coins, P2WPKHAddrDecoder
     except ImportError:
         print("Install dependencies with python -m pip install -r requirements.txt.", file=sys.stderr)
         return 2
@@ -151,8 +151,19 @@ def verify_address(argv):
         print("No passphrase was tested. Change addresses and later receiving indexes were not checked.")
         return 1
     print(f"Match at receiving index {index}.")
-    if index != 0 or account.Bip32Object().Index().ToInt() != 0x80000000:
-        print("This address is outside the passphrase checker's account-zero, index-zero scope.")
+    if account.Bip32Object().Index().ToInt() != 0x80000000:
+        print("This export is from another account. The passphrase checker uses account 0.")
+    elif index != 0:
+        print("This saved address matches the export, but the passphrase checker needs "
+              "the first receiving address. Use an export from the original wallet backup.")
+        if sys.stdin.isatty() and sys.stdout.isatty():
+            try:
+                answer = input("Show the first receiving address on this terminal? [y/N] ")
+            except EOFError:
+                answer = ""
+            if answer.strip().lower() in ("y", "yes"):
+                first = account.Change(Bip44Changes.CHAIN_EXT).AddressIndex(0)
+                print(f"First receiving address: {first.PublicKey().ToAddress()}")
     else:
         print("This is the first receiving address of the supplied account-zero export. "
               "No passphrase was tested.")
